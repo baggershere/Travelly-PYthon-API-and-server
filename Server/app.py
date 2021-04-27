@@ -755,6 +755,7 @@ def signup_form():
             'salt': pw_salt(),
             'r_salt': pw_salt()
         }
+        r_answer = user_sign_up['recovery_answer']
         # print(user_sign_up)
         # first check user inputs are valid firstname, lastname, username, email and password
         check_input = input_validation(user_sign_up)
@@ -767,7 +768,10 @@ def signup_form():
                 user_sign_up['recovery_answer'], user_sign_up['r_salt'])
             # insert user details to database. It returns a message whether the user is successfully
             # inserted or not
-            return render_template('signup.html', name="", surname="", username="", email="", dob="", r_answer="", check_input=insert_user(user_sign_up))
+            return render_template('signup.html', name=user_sign_up['firstname'], surname=user_sign_up['lastname'],
+                                   username=user_sign_up['username'], email=user_sign_up['email'],
+                                   dob=user_sign_up['dob'], r_answer=r_answer,
+                                   check_input=insert_user(user_sign_up))
         else:
             # Give error message to user
             return render_template('signup.html',
@@ -775,6 +779,7 @@ def signup_form():
                                    username=user_sign_up['username'], email=user_sign_up['email'],
                                    dob=user_sign_up['dob'], r_answer=user_sign_up['recovery_answer'],
                                    check_input=check_input)
+
 
 @app.route('/api/deletepost', methods=['POST'])
 def delete_post():
@@ -818,7 +823,15 @@ def del_user():
 
 @app.route('/accountrecovery', methods=['GET'])
 def get_account_recover():
-    return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False)
+    try:
+        sessionID = request.cookies.get('sessionID')
+        session = session_auth(request.cookies)
+        if (session and sessionID):
+            return redirect(url_for('home'))
+        else:
+            return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False)
+    except:
+        pass
 
 
 @app.route('/recoveryquestion', methods=['POST'])
@@ -851,16 +864,19 @@ def change_account_password():
         recovery_answer_salt = user_credentials[0][2]
         user_input_salted_answer = pw_hash_salt(
             user_change_password['recovery-answer'], recovery_answer_salt)
-        if user_input_salted_answer == recovery_answer and is_valid_password(user_credentials, user_change_password['new_password']):
-            username = user_credentials[0][0]
-            salted_pw = pw_hash_salt(
-                user_change_password['new_password'], user_change_password['salt'])
-            update_password(username, salted_pw, user_change_password['salt'])
-            return render_template('accountrecovery.html', password_form=False, validated_password=True)
+        if is_valid_password(user_credentials, user_change_password['new_password']):
+            if user_input_salted_answer == recovery_answer:
+                username = user_credentials[0][0]
+                salted_pw = pw_hash_salt(
+                    user_change_password['new_password'], user_change_password['salt'])
+                update_password(username, salted_pw, user_change_password['salt'])
+                return redirect('home')
+            else:
+                return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!")
         else:
-            return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username or answer again!")
+            return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!")
     else:
-        return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username or answer again!")
+        return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username")
 
 
 def is_valid_password(user_data, password):
@@ -942,7 +958,6 @@ def unban_ip():
         return
     else:
         return
-
 
 def insert_user(data):
     try:
