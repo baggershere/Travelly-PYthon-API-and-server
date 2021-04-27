@@ -544,7 +544,9 @@ def logout():
         cur.execute("DELETE FROM %s WHERE sid=%s",
                     [AsIs('tr_session'), session])
         conn.commit()
-        return redirect(url_for('home'))
+        resp= make_response(redirect(url_for('home')))
+        resp.set_cookie('sessionID', '', max_age= 0)
+        return resp
     else:
         return redirect(url_for('get_login'))
 
