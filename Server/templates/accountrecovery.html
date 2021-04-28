@@ -31,6 +31,7 @@
                     <div class="myform form ">
                         <form action="/recoveryquestion" method="POST">
                             <div class="form-group">
+                                <input  name="csrf_token" type="hidden" value= {{ csrf_token }} />
                                 <input type="email" name="email" class="form-control my-input" id="email"
                                     placeholder="Email" value="dagasannuri@gmail.comm" required>
                             </div>
@@ -70,6 +71,7 @@
                     <div class="myform form ">
                         <form action="/changepassword" method="POST">
                             <div class="form-group">
+                                <input  name="csrf_token" type="hidden" value= {{ csrf_token }} />
                                 <input type="text" name="username" class="form-control my-input" id="user-name"
                                     placeholder="Username" pattern="[a-zA-Z0-9-]+" required>
                             </div>
