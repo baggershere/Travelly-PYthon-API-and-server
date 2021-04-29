@@ -158,7 +158,6 @@ def remove_session(username):
     conn.close()
     return
 
-
 def insert_session(sid, username, time):
     conn = getcon()
     cur = conn.cursor()
@@ -167,7 +166,6 @@ def insert_session(sid, username, time):
                 AsIs('tr_session'), sid, username, time])
     conn.commit()
     return
-
 
 def session_auth(cookies):
     session = cookies.get('sessionID')
@@ -200,6 +198,7 @@ def session_auth(cookies):
                 conn.commit()
                 return False
         else:
+            print('session not valid')
             return False
     else:
         return False
@@ -606,7 +605,7 @@ def profile_page():
             private_user_information["username"])
         return render_template('profile.html', user_info=private_user_information, posts=user_posts, len=len(user_posts))
     else:
-        return redirect(url_for('get_login'))
+        return redirect(url_for('home'))
 
 
 @app.route('/login')
@@ -804,7 +803,7 @@ def delete_post():
 def del_user():
     sessionID = request.cookies.get('sessionID')
     user_to_delete = request.json['user']
-    if (sessionID and is_admin(get_username_from_session(sessionID)) and user_to_delete != 'tradmin'):
+    if sessionID and is_admin(get_username_from_session(sessionID)) and user_to_delete != 'tradmin':
         conn = getcon()
         cur = conn.cursor()
         cur.execute(search_path)
@@ -812,8 +811,19 @@ def del_user():
                     [user_to_delete])
         conn.commit()
         return
+    if user_to_delete == get_username_from_session(sessionID):
+        conn = getcon()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        cur.execute("DELETE FROM tr_users WHERE username = %s",
+                    [user_to_delete])
+        cur.execute("DELETE FROM tr_session WHERE username = %s", [user_to_delete])
+        conn.commit()
+        resp = make_response('success', 200)
+        return resp
     else:
-        return
+        resp = make_response('unsuccessful', 401)
+        return resp
 
 
 @app.route('/accountrecovery', methods=['GET'])
@@ -927,6 +937,24 @@ def admin_page():
     else:
         return render_template('notfound.html')
 
+
+@app.route('/api/wipeinactive', methods=['POST'])
+def wipe_all():
+    if(session_is_admin(request.cookies)):
+        conn = getcon()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        cur.execute("SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes'")
+        users = cur.fetchall()
+        cur.execute("DELETE FROM tr_users WHERE username IN (SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes')")
+        conn.commit()
+        resp = make_response('success', 200)
+        data = list(set([user[0] for user in users]))
+        print(data)
+        return make_response(jsonify({'users': data}), 200)
+    else:
+        resp = make_response('unsuccessful', 401)
+        return resp
 
 @app.route('/api/unbanip', methods=['POST'])
 def unban_ip():
