@@ -543,7 +543,9 @@ def logout():
         cur.execute("DELETE FROM %s WHERE sid=%s",
                     [AsIs('tr_session'), session])
         conn.commit()
-        return redirect(url_for('home'))
+        resp= make_response(redirect(url_for('home')))
+        resp.set_cookie('sessionID', '', max_age= 0)
+        return resp
     else:
         return redirect(url_for('get_login'))
 
@@ -754,6 +756,7 @@ def signup_form():
             'salt': pw_salt(),
             'r_salt': pw_salt()
         }
+        r_answer = user_sign_up['recovery_answer']
         # print(user_sign_up)
         # first check user inputs are valid firstname, lastname, username, email and password
         check_input = input_validation(user_sign_up)
@@ -766,7 +769,10 @@ def signup_form():
                 user_sign_up['recovery_answer'], user_sign_up['r_salt'])
             # insert user details to database. It returns a message whether the user is successfully
             # inserted or not
-            return render_template('signup.html', name="", surname="", username="", email="", dob="", r_answer="", check_input=insert_user(user_sign_up))
+            return render_template('signup.html', name=user_sign_up['firstname'], surname=user_sign_up['lastname'],
+                                   username=user_sign_up['username'], email=user_sign_up['email'],
+                                   dob=user_sign_up['dob'], r_answer=r_answer,
+                                   check_input=insert_user(user_sign_up))
         else:
             # Give error message to user
             return render_template('signup.html',
@@ -774,6 +780,7 @@ def signup_form():
                                    username=user_sign_up['username'], email=user_sign_up['email'],
                                    dob=user_sign_up['dob'], r_answer=user_sign_up['recovery_answer'],
                                    check_input=check_input)
+
 
 @app.route('/api/deletepost', methods=['POST'])
 def delete_post():
@@ -828,12 +835,46 @@ def del_user():
 
 @app.route('/accountrecovery', methods=['GET'])
 def get_account_recover():
-    return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False)
+    try:
+        sessionID = request.cookies.get('sessionID')
+        session = session_auth(request.cookies)
+        if (session and sessionID):
+            return redirect(url_for('home'))
+        else:
+            session_exists = session_auth_not_loggedin(request.cookies)
+            if session_exists:
+                sessionID = request.cookies.get('sessionID')
+                csrf_token = createRandomId()
+                conn = getcon()
+                cur = conn.cursor()
+                cur.execute(search_path)
+                sql = "UPDATE tr_session SET csrf = %s WHERE sid= %s"
+                data = (csrf_token, sessionID)
+                cur.execute(sql, data)
+                conn.commit()
+                return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token)
+            else:
+                sessionID = createRandomId()
+                csrf_token = createRandomId()
+                expire = datetime.datetime.now() + datetime.timedelta(hours=0.5)
+                sql = "INSERT into tr_session VALUES (%s, %s, %s, %s)"
+                data = (sessionID, 'NULL', expire, csrf_token,)
+                conn = getcon()
+                cur = conn.cursor()
+                cur.execute(search_path)
+                cur.execute(sql, data)
+                conn.commit()
+                resp = make_response(render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token))
+                resp.set_cookie('sesisonID', sessionID)
+                return resp
+    except:
+        pass
 
 
 @app.route('/recoveryquestion', methods=['POST'])
 def post_account_recover():
-
+    sessionID = request.cookies.get('sessionID')
+    csrf_token = get_csrf_token(sessionID)
     account_recovery = {
         'email': escape_email(request.form['email'].lower()),
         'dob': escape(request.form['birthdate'])
@@ -841,36 +882,50 @@ def post_account_recover():
     user_credentials = check_email_dob(account_recovery)
     if user_credentials:
         recovery_question = user_credentials[0][0]
-        return render_template('accountrecovery.html', recovery_form=False, password_form=True, recovery_question=recovery_question)
+        return render_template('accountrecovery.html', recovery_form=False, password_form=True, recovery_question=recovery_question, csrf_token=csrf_token)
     else:
-        return render_template('accountrecovery.html', recovery_form=True, check_input="Please, check your credentials again!")
+        return render_template('accountrecovery.html', recovery_form=True, check_input="Please, check your credentials again!",csrf_token=csrf_token)
 
 
 @app.route('/changepassword', methods=['POST'])
 def change_account_password():
-    user_change_password = {
-        'username': escape(request.form['username'].lower()),
-        'recovery-answer':  escape(request.form['recovery-answer']),
-        'new_password': request.form['password'],
-        'salt': pw_salt()
-    }
-    user_name = user_change_password['username']
-    user_credentials = check_username(user_name)
-    if user_credentials:
-        recovery_answer = user_credentials[0][1]
-        recovery_answer_salt = user_credentials[0][2]
-        user_input_salted_answer = pw_hash_salt(
-            user_change_password['recovery-answer'], recovery_answer_salt)
-        if user_input_salted_answer == recovery_answer and is_valid_password(user_credentials, user_change_password['new_password']):
-            username = user_credentials[0][0]
-            salted_pw = pw_hash_salt(
-                user_change_password['new_password'], user_change_password['salt'])
-            update_password(username, salted_pw, user_change_password['salt'])
-            return render_template('accountrecovery.html', password_form=False, validated_password=True)
-        else:
-            return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username or answer again!")
+    sessionID = request.cookies.get('sessionID')
+    username = get_username_from_session(sessionID)
+    if username != 'NULL':
+        return redirect(url_for('home'))
     else:
-        return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username or answer again!")
+        user_csrf_token = request.form['csrf_token'].strip("/")
+        sessionID = request.cookies.get('sessionID')
+        csrf_token = get_csrf_token(sessionID)
+        if csrf_token == user_csrf_token:
+            user_change_password = {
+                'username': escape(request.form['username'].lower()),
+                'recovery-answer':  escape(request.form['recovery-answer']),
+                'new_password': request.form['password'],
+                'salt': pw_salt()
+            }
+            user_name = user_change_password['username']
+            user_credentials = check_username(user_name)
+            if user_credentials:
+                recovery_answer = user_credentials[0][1]
+                recovery_answer_salt = user_credentials[0][2]
+                user_input_salted_answer = pw_hash_salt(
+                    user_change_password['recovery-answer'], recovery_answer_salt)
+                if is_valid_password(user_credentials, user_change_password['new_password']):
+                    if user_input_salted_answer == recovery_answer:
+                        username = user_credentials[0][0]
+                        salted_pw = pw_hash_salt(
+                            user_change_password['new_password'], user_change_password['salt'])
+                        update_password(username, salted_pw, user_change_password['salt'])
+                        return redirect('home')
+                    else:
+                        return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!",csrf_token=csrf_token)
+                else:
+                    return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!",csrf_token=csrf_token)
+            else:
+                return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username",csrf_token=csrf_token)
+        else:
+                return render_template('accountrecovery.html', password_form=True,check_input='CSRF tokens do not match.',csrf_token=csrf_token)
 
 
 def is_valid_password(user_data, password):
@@ -970,7 +1025,6 @@ def unban_ip():
         return
     else:
         return
-
 
 def insert_user(data):
     try:
