@@ -220,12 +220,57 @@ def session_auth_not_loggedin(cookies):
     else:
         return False
 
+def session_r_auth_not_loggedin(cookies):
+    session = cookies.get('r_sessionID')
+    if (session):
+        conn = getcon()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        cur.execute("SELECT r_sid FROM tr_r_session WHERE r_sid = %s", [session])
+        resp = cur.fetchone()
+        conn.commit()
+        if (resp):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def session_r_auth_not_loggedin(cookies):
+    session = cookies.get('r_sessionID')
+    if (session):
+        conn = getcon()
+        cur = conn.cursor()
+        cur.execute(search_path)
+        cur.execute("SELECT r_sid FROM tr_r_session WHERE r_sid = %s", [session])
+        resp = cur.fetchone()
+        conn.commit()
+        if (resp):
+            return True
+        else:
+            return False
+    else:
+        return False
+
 
 def get_username_from_session(sessionID):
     conn = getcon()
     cur = conn.cursor()
     cur.execute(search_path)
     cur.execute("SELECT username FROM tr_session WHERE sid = %s", [sessionID])
+    user = cur.fetchone()
+    conn.commit()
+    if (user):
+        return user[0]
+    else:
+        return 'No user'
+
+def get_username_from_r_session(r_sessionID):
+    conn = getcon()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    cur.execute("SELECT username FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
     user = cur.fetchone()
     conn.commit()
     if (user):
@@ -410,6 +455,13 @@ def get_csrf_token(sessionID):
     csrf_token = cur.fetchone()[0]
     return csrf_token
 
+def get_r_csrf_token(r_sessionID):
+    conn = getcon()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    cur.execute("SELECT csrf FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
+    csrf_token = cur.fetchone()[0]
+    return csrf_token
 
 def get_username_from_pid(pid):
     conn = getcon()
@@ -842,31 +894,32 @@ def get_account_recover():
         if (session and sessionID):
             return redirect(url_for('home'))
         else:
-            session_exists = session_auth_not_loggedin(request.cookies)
+            session_exists = session_r_auth_not_loggedin(request.cookies)
+            print(session_exists)
             if session_exists:
-                sessionID = request.cookies.get('sessionID')
+                sessionID = request.cookies.get('r_sessionID')
                 csrf_token = createRandomId()
                 conn = getcon()
                 cur = conn.cursor()
                 cur.execute(search_path)
-                sql = "UPDATE tr_session SET csrf = %s WHERE sid= %s"
+                sql = "UPDATE tr_r_session SET csrf = %s WHERE r_sid= %s"
                 data = (csrf_token, sessionID)
                 cur.execute(sql, data)
                 conn.commit()
                 return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token)
             else:
-                sessionID = createRandomId()
+                r_sessionID = createRandomId()
                 csrf_token = createRandomId()
                 expire = datetime.datetime.now() + datetime.timedelta(hours=0.5)
-                sql = "INSERT into tr_session VALUES (%s, %s, %s, %s)"
-                data = (sessionID, 'NULL', expire, csrf_token,)
+                sql = "INSERT into tr_r_session VALUES (%s, %s, %s, %s)"
+                data = (r_sessionID, 'NULL', expire, csrf_token,)
                 conn = getcon()
                 cur = conn.cursor()
                 cur.execute(search_path)
                 cur.execute(sql, data)
                 conn.commit()
                 resp = make_response(render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token))
-                resp.set_cookie('sesisonID', sessionID)
+                resp.set_cookie('r_sessionID', r_sessionID)
                 return resp
     except:
         pass
@@ -874,8 +927,8 @@ def get_account_recover():
 
 @app.route('/recoveryquestion', methods=['POST'])
 def post_account_recover():
-    sessionID = request.cookies.get('sessionID')
-    csrf_token = get_csrf_token(sessionID)
+    r_sessionID = request.cookies.get('r_sessionID')
+    csrf_token = get_r_csrf_token(r_sessionID)
     account_recovery = {
         'email': escape_email(request.form['email'].lower()),
         'dob': escape(request.form['birthdate'])
@@ -883,6 +936,8 @@ def post_account_recover():
     user_credentials = check_email_dob(account_recovery)
     if user_credentials:
         recovery_question = user_credentials[0][0]
+        username = user_credentials[0][1]
+        update_username_from_r_session(username, r_sessionID)
         return render_template('accountrecovery.html', recovery_form=False, password_form=True, recovery_question=recovery_question, csrf_token=csrf_token)
     else:
         return render_template('accountrecovery.html', recovery_form=True, check_input="Please, check your credentials again!",csrf_token=csrf_token)
@@ -890,43 +945,47 @@ def post_account_recover():
 
 @app.route('/changepassword', methods=['POST'])
 def change_account_password():
-    sessionID = request.cookies.get('sessionID')
-    username = get_username_from_session(sessionID)
-    if username != 'NULL':
-        return redirect(url_for('home'))
-    else:
-        user_csrf_token = request.form['csrf_token'].strip("/")
-        sessionID = request.cookies.get('sessionID')
-        csrf_token = get_csrf_token(sessionID)
-        if csrf_token == user_csrf_token:
-            user_change_password = {
-                'username': escape(request.form['username'].lower()),
-                'recovery-answer':  escape(request.form['recovery-answer']),
-                'new_password': request.form['password'],
-                'salt': pw_salt()
-            }
-            user_name = user_change_password['username']
-            user_credentials = check_username(user_name)
-            if user_credentials:
-                recovery_answer = user_credentials[0][1]
-                recovery_answer_salt = user_credentials[0][2]
-                user_input_salted_answer = pw_hash_salt(
-                    user_change_password['recovery-answer'], recovery_answer_salt)
-                if is_valid_password(user_credentials, user_change_password['new_password']):
-                    if user_input_salted_answer == recovery_answer:
-                        username = user_credentials[0][0]
-                        salted_pw = pw_hash_salt(
-                            user_change_password['new_password'], user_change_password['salt'])
-                        update_password(username, salted_pw, user_change_password['salt'])
-                        return redirect('home')
-                    else:
-                        return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!",csrf_token=csrf_token)
-                else:
-                    return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!",csrf_token=csrf_token)
-            else:
-                return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username",csrf_token=csrf_token)
+    try:
+        r_sessionID = request.cookies.get('r_sessionID')
+        username = get_username_from_r_session(r_sessionID)
+        if username == 'NULL':
+            return redirect(url_for('home'))
         else:
-                return render_template('accountrecovery.html', password_form=True,check_input='CSRF tokens do not match.',csrf_token=csrf_token)
+            user_csrf_token = request.form['csrf_token'].strip("/")
+            r_sessionID = request.cookies.get('r_sessionID')
+            csrf_token = get_r_csrf_token(r_sessionID)
+            if csrf_token == user_csrf_token:
+                user_change_password = {
+                    'username': username,
+                    'recovery-answer':  escape(request.form['recovery-answer']),
+                    'new_password': request.form['password'],
+                    'salt': pw_salt()
+                }
+                user_name = user_change_password['username']
+                user_credentials = check_username(user_name)
+                if user_credentials:
+                    recovery_answer = user_credentials[0][1]
+                    recovery_answer_salt = user_credentials[0][2]
+                    user_input_salted_answer = pw_hash_salt(
+                        user_change_password['recovery-answer'], recovery_answer_salt)
+                    if is_valid_password(user_credentials, user_change_password['new_password']):
+                        if user_input_salted_answer == recovery_answer:
+                            username = user_credentials[0][0]
+                            salted_pw = pw_hash_salt(
+                                user_change_password['new_password'], user_change_password['salt'])
+                            update_password(username, salted_pw, user_change_password['salt'])
+                            delete_r_sessionID(r_sessionID)
+                            return redirect('login')
+                        else:
+                            return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!",csrf_token=csrf_token)
+                    else:
+                        return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!",csrf_token=csrf_token)
+                else:
+                    return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username",csrf_token=csrf_token)
+            else:
+                    return render_template('accountrecovery.html', password_form=True,check_input='CSRF tokens do not match.',csrf_token=csrf_token)
+    except:
+        return render_template('accountrecovery.html', invalid_session = True)
 
 
 def is_valid_password(user_data, password):
@@ -944,7 +1003,7 @@ def check_email_dob(account_recovery):
     conn = getcon()
     cur = conn.cursor()
     cur.execute(search_path)
-    sql = """SELECT recoveryquestion FROM tr_users WHERE email = %s and dob = %s;"""
+    sql = """SELECT recoveryquestion, username FROM tr_users WHERE email = %s and dob = %s;"""
     data = (account_recovery['email'], account_recovery['dob'])
     cur.execute(sql, data)
     conn.commit()
@@ -970,6 +1029,23 @@ def update_password(username, password, salt):
     sql = """UPDATE tr_users SET (password, salt) = (%s, %s) WHERE username = %s """
     data = (password, salt, username)
     cur.execute(sql, data)
+    conn.commit()
+
+def update_username_from_r_session(username, r_sessionID):
+    conn = getcon()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    sql = """UPDATE tr_r_session SET username = %s WHERE r_sid = %s """
+    data = (username, r_sessionID)
+    cur.execute(sql, data)
+    conn.commit()
+
+def delete_r_sessionID(session):
+    conn = getcon()
+    cur = conn.cursor()
+    cur.execute(search_path)
+    cur.execute("DELETE FROM %s WHERE r_sid=%s",
+                    [AsIs('tr_r_session'), session])
     conn.commit()
 
 

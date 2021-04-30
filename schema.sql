@@ -21,6 +21,12 @@ CREATE TABLE tr_session (
     expires      TIMESTAMP NOT NULL,
     csrf         VARCHAR UNIQUE);
 
+CREATE TABLE tr_r_session (
+    r_sid          VARCHAR NOT NULL UNIQUE PRIMARY KEY,
+    username     VARCHAR(100),
+    expires      TIMESTAMP NOT NULL,
+    csrf         VARCHAR UNIQUE);
+
 CREATE TABLE tr_post (
     pid          SERIAL UNIQUE,
     title        TEXT NOT NULL,
