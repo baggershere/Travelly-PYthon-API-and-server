@@ -22,7 +22,7 @@ CREATE TABLE tr_session (
     csrf         VARCHAR UNIQUE);
 
 CREATE TABLE tr_r_session (
-    r_sid          VARCHAR NOT NULL UNIQUE PRIMARY KEY,
+    r_sid        VARCHAR NOT NULL UNIQUE PRIMARY KEY,
     username     VARCHAR(100),
     expires      TIMESTAMP NOT NULL,
     csrf         VARCHAR UNIQUE);

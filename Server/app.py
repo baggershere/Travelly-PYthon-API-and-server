@@ -388,7 +388,7 @@ def error_test():
 def fetch_all_countries():
     conn, cur = getcon()
     cur.execute(search_path)
-    cur.execute("SELECT country FROM tr_post")
+    cur.execute("SELECT DISTINCT(country) FROM tr_post ORDER BY country")
     resp = cur.fetchall()
     return resp
 
@@ -438,9 +438,9 @@ def createpost():
             # Useful data that can be accessed from the request object. Data sent as JSON for testing purposes
             input_data = {
 
-                'title': delete_tags(str(request.form['post-title'].lower())),
+                'title': delete_tags(str(request.form['post-title'])),
                 'country': str(request.form.get('country')),
-                'content': delete_tags(str(request.form['post-content'].lower())),
+                'content': delete_tags(str(request.form['post-content'])),
                 'date': datetime.datetime.now()
 
             }
@@ -776,8 +776,9 @@ def get_account_recover():
                 resp = make_response(render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token))
                 resp.set_cookie('r_sessionID', r_sessionID)
                 return resp
-    except:
-        pass
+    except Exception as e:
+        error_handler(e)
+        return 'hello'
 
 
 @app.route('/recoveryquestion', methods=['POST'])
@@ -981,11 +982,10 @@ def input_validation(user_sign_up):
         return "Check your password again."
     elif (user_sign_up['firstname'].lower() in user_sign_up['password'].lower()) or (user_sign_up['lastname'].lower() in user_sign_up['password'].lower()):
         return "Your password must not include your name or surname."
-    elif not bool(re.fullmatch('[A-Za-z]{2,25}( [A-Za-z]{2,25})?', user_sign_up['recovery_answer'])):
-        return "Account recovery answer must include only letters."
+    elif not bool(re.fullmatch('^[A-Za-z0-9_-]*$', user_sign_up['recovery_answer'])):
+        return "Account recovery answer must include only letters and numbers."
     else:
         return True
-
 
 def pw_salt():
     random_digits = '''abcdeg_+]|,./;:>'''
