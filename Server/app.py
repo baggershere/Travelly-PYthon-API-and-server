@@ -511,11 +511,12 @@ def createpost():
             input_data = {
 
                 'title': delete_tags(str(request.form['post-title'].lower())),
-                'country': str(request.form.get('country').lower()),
+                'country': str(request.form.get('country')),
                 'content': delete_tags(str(request.form['post-content'].lower())),
                 'date': datetime.datetime.now()
 
             }
+            print(input_data)
             # In order to completed the input_data object with the missing data needed to
             # insert the post, we can use the session to access the author of the post.
             input_data['author'] = get_username_from_session(user_session)
