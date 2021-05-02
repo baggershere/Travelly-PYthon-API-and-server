@@ -611,7 +611,7 @@ def post_login():
                     'HTTP_X_REAL_IP', request.remote_addr))
 
             if (lockout_or_no_lockout(data['username'])):
-                return render_template('login.html', check_input='Your account has been temporarily locked out', csrf_token=csrf_token)
+                return render_template('login.html', check_input=f'Your account has been temporarily locked out. You can either wait 30 minutes or reset your password to login', csrf_token=csrf_token)
 
             if check_account != 0:
                 conn, cur = getcon()
@@ -752,7 +752,6 @@ def get_account_recover():
             return redirect(url_for('home'))
         else:
             session_exists = session_r_auth_not_loggedin(request.cookies)
-            print(session_exists)
             if session_exists:
                 sessionID = request.cookies.get('r_sessionID')
                 csrf_token = createRandomId()
@@ -764,6 +763,7 @@ def get_account_recover():
                 conn.commit()
                 return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token)
             else:
+                print("IAM THERE 4")
                 r_sessionID = createRandomId()
                 csrf_token = createRandomId()
                 expire = datetime.datetime.now() + datetime.timedelta(hours=0.5)
@@ -777,7 +777,7 @@ def get_account_recover():
                 resp.set_cookie('r_sessionID', r_sessionID)
                 return resp
     except:
-        pass
+        return "Check PostgreSQL Password"
 
 
 @app.route('/recoveryquestion', methods=['POST'])
