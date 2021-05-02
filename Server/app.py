@@ -307,7 +307,7 @@ def lockout_or_no_lockout(username):
     conn, cur = getcon()
     cur.execute(search_path)
     cur.execute(
-        "SELECT COUNT(*) FROM tr_lockout WHERE username = %s AND date >= now() - INTERVAL '1 minute'", [username])
+        "SELECT COUNT(*) FROM tr_lockout WHERE username = %s AND date >= now() - INTERVAL '30 minute'", [username])
     resp = cur.fetchone()[0]
     print(resp)
     if resp > 3:
