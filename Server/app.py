@@ -149,6 +149,7 @@ def session_auth_not_loggedin(cookies):
     session = cookies.get('sessionID')
     if (session):
         conn, cur = getcon()
+
         cur.execute("SELECT sid FROM tr_session WHERE sid = %s", [session])
         resp = cur.fetchone()
         conn.commit()
@@ -164,6 +165,7 @@ def session_r_auth_not_loggedin(cookies):
     session = cookies.get('r_sessionID')
     if (session):
         conn, cur = getcon()
+
         cur.execute("SELECT r_sid FROM tr_r_session WHERE r_sid = %s", [session])
         resp = cur.fetchone()
         conn.commit()
@@ -186,8 +188,10 @@ def get_username_from_session(sessionID):
         return 'No user'
 
 def get_username_from_r_session(r_sessionID):
+
 '''gets username based on account recovery page session ID'''
     conn, cur = getcon()
+
     cur.execute("SELECT username FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
     user = cur.fetchone()
     conn.commit()
@@ -204,13 +208,16 @@ def insert_post(post_info):
     country = escape(country)
     content = escape(content)
     conn, cur = getcon()
+
     cur.execute("INSERT INTO tr_post (title, country, author, content, date) VALUES (%s,%s,%s,%s,%s)", [
                 title, country, author, content, date])
     conn.commit()
 
 def fetch_all_posts():
+
 '''retrieves all posts from the db to display on the page, ordering them by date'''
     conn, cur = getcon()
+
     cur.execute("SELECT * FROM tr_post ORDER BY date DESC")
     posts = cur.fetchall()
     posts_array = []
@@ -226,24 +233,30 @@ def fetch_all_posts():
     return posts_array
 
 def fetch_banned_ip():
+
 '''selects all IP addresses from the banned ip address table'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT DISTINCT ip_address FROM ip_ban WHERE date >= now() - INTERVAL '30 minute'")
     resp = cur.fetchall()
     return resp
 
 def insert_into_ip_ban(username, ip):
+
 'inserts a user into the banned ip address table'''
     conn, cur = getcon()
+
     cur.execute("INSERT INTO ip_ban (ip_address,username,date) VALUES (%s,%s,NOW())", [
                 ip, username])
     conn.commit()
     conn.close()
 
 def ip_ban_or_no_ip_ban(ip):
+
 '''checks if an IP address is banned or not'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT COUNT(*) FROM ip_ban WHERE ip_address = %s AND date >= now() - INTERVAL '30 minute'", [ip])
     resp = cur.fetchone()[0]
@@ -254,8 +267,10 @@ def ip_ban_or_no_ip_ban(ip):
 
 
 def fetch_most_recent_user_posts(username):
+
 '''sleects all posts from a given user and orders them by date'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT * FROM tr_post WHERE author=%s ORDER BY date DESC", [username])
     posts = cur.fetchall()[:10]
@@ -300,8 +315,10 @@ def fetch_five_most_pop():
 
 
 def get_user_information(sessionID):
+
  '''selects user informaiton based on the sessionID'''
     conn, cur = getcon()
+
     cur.execute("SELECT username FROM tr_session WHERE sid = %s", [sessionID])
     username = cur.fetchone()
     cur.execute("SELECT * FROM tr_users WHERE username=%s", [username])
@@ -315,8 +332,10 @@ def get_user_information(sessionID):
 
 
 def lockout_or_no_lockout(username):
+
 ''' confirms if a given user has been locked out or not'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT COUNT(*) FROM tr_lockout WHERE username = %s AND date >= now() - INTERVAL '1 minute'", [username])
     resp = cur.fetchone()[0]
@@ -328,8 +347,10 @@ def lockout_or_no_lockout(username):
 
 
 def username_right_password_wrong(username, password):
+
 '''checks if username exists, then if password given is correct'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT COUNT(*) FROM tr_users WHERE username = %s", [username])
     username_exists_or_not = cur.fetchone()[0]
@@ -342,22 +363,28 @@ def username_right_password_wrong(username, password):
 
 
 def get_csrf_token(sessionID):
+
 ''' gets csrf token for given session'''
     conn, cur = getcon()
+
     cur.execute("SELECT csrf FROM tr_session WHERE sid = %s", [sessionID])
     csrf_token = cur.fetchone()[0]
     return csrf_token
 
 def get_r_csrf_token(r_sessionID):
+
     ''' gets csrf token for given session for account recovery page'''
     conn, cur = getcon()
+
     cur.execute("SELECT csrf FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
     csrf_token = cur.fetchone()[0]
     return csrf_token
 
 def get_username_from_pid(pid):
+
 '''gets username for a given post ID'''
     conn, cur = getcon()
+
     cur.execute("SELECT author FROM tr_post WHERE pid = %s", [pid])
     conn.commit()
     username = cur.fetchone()
@@ -365,8 +392,10 @@ def get_username_from_pid(pid):
 
 
 def is_admin(username):
+
 '''checks if a user has admin rights or not based on username'''
     conn, cur = getcon()
+
     cur.execute(
         "SELECT COUNT(*) FROM tr_users WHERE username = %s AND admin = 'true'", [username])
     res = cur.fetchone()
@@ -378,6 +407,7 @@ def session_is_admin(cookies):
     sessionID = cookies.get('sessionID')
     if (sessionID):
         conn, cur = getcon()
+
         username = get_username_from_session(sessionID)
         if (username and is_admin(username)):
             return True
@@ -397,9 +427,11 @@ def error_test():
 
 
 def fetch_all_countries():
+
  '''selects all countries that have a post written about them'''
     conn, cur = getcon()
     cur.execute("SELECT DISTINCT(country) FROM tr_post ORDER BY country")
+
     resp = cur.fetchall()
     return resp
 
@@ -422,7 +454,9 @@ def home():
         sessionID = request.cookies.get('sessionID')
         csrf_token = createRandomId()
         conn, cur = getcon()
+
         ''' send csrf token to db for given session'''
+
         sql = "UPDATE tr_session SET csrf = %s WHERE sid= %s"
         data = (csrf_token, sessionID)
         cur.execute(sql, data)
@@ -450,15 +484,17 @@ def createpost():
             # Useful data that can be accessed from the request object. Data sent as JSON for testing purposes
             input_data = {
 
+
                 'title': delete_tags(str(request.form['post-title'])),
                 'country': str(request.form.get('country')),
                 'content': delete_tags(str(request.form['post-content'])),
                 'date': datetime.datetime.now()
-
             }
             print(input_data)
+
             '''In order to completed the input_data object with the missing data needed to
             insert the post, we can use the session to access the author of the post.'''
+
             input_data['author'] = get_username_from_session(user_session)
             #input_data['pid'] = get_unused_pid()[0] + 1
             # Insert the data to tr_post table
@@ -479,6 +515,7 @@ def logout():
         return redirect(url_for('get_login'))
 
     if (session and request.method == 'GET'):
+
     ''' if there is a session, delete session from db and redirect user to homepage'''
         conn, cur = getcon()
         cur.execute("DELETE FROM %s WHERE sid=%s",
@@ -499,7 +536,6 @@ def return_counry_posts(country):
     countries = fetch_five_most_pop()
     all_countries_with_posts = fetch_all_countries()
     conn, cur = getcon()
-
     cur.execute("SELECT * FROM tr_post WHERE country=%s", [' '.join(country)])
 
     conn.commit()
@@ -553,6 +589,7 @@ def get_login():
         ''' if there is a session and username does not equal 'NULL', redirect to homepage'''
             return redirect(url_for('home'))
         else:
+
             '''delete current session and create a new one with a csrf token'''
             conn, cur = getcon()
             cur.execute("DELETE FROM %s WHERE sid=%s", [
@@ -607,6 +644,7 @@ def post_login():
                 data['password'], (get_salt_from_db(data['username'])))
             query_data = (data['username'], (user_input_password))
             conn, cur = getcon()
+
             cur.execute(sql, query_data)
             conn.commit()
             check_account = cur.fetchone()[0]
@@ -634,6 +672,7 @@ def post_login():
             '''if there is a result, the pw and username were correct'''
             if check_account != 0:
                 conn, cur = getcon()
+
                 cur.execute("DELETE FROM %s WHERE sid=%s", [
                             AsIs('tr_session'), sessionID])
                 conn.commit()
@@ -677,14 +716,14 @@ def signup_form():
             return render_template('signup.html')
     else:
         user_sign_up = {
-            'firstname':  request.form['name'].lower(),
-            'lastname': request.form['surname'].lower(),
-            'username': request.form['username'].lower(),
-            'email': request.form['email'].lower(),
+            'firstname':  request.form['name'].lower().replace(" ", ""),
+            'lastname': request.form['surname'].lower().replace(" ", ""),
+            'username': request.form['username'].lower().replace(" ", ""),
+            'email': request.form['email'].lower().replace(" ", ""),
             'dob': request.form['birthdate'],
-            'password': request.form['password'],
+            'password': request.form['password'].replace(" ", ""),
             'recovery_question': request.form['recovery-question'],
-            'recovery_answer': request.form['recovery-answer'],
+            'recovery_answer': request.form['recovery-answer'].replace(" ", ""),
             'salt': pw_salt(),
             'r_salt': pw_salt()
         }
@@ -726,6 +765,7 @@ def delete_post():
         '''Check that username from session is equal to username of the post, or if user is an admin user'''
         if (((username_from_session != None and username_from_pid != None) and (username_from_session == username_from_pid)) or (is_admin(get_username_from_session(sessionID)))):
             conn, cur = getcon()
+
             cur.execute("DELETE FROM tr_post WHERE pid=%s", [pid])
             conn.commit()
             resp = make_response('added', 201)
@@ -743,6 +783,7 @@ def del_user():
     '''check there is a session ID and the user is admin, and user to delete is not admin username'''
     if sessionID and is_admin(get_username_from_session(sessionID)) and user_to_delete != 'tradmin':
         conn, cur = getcon()
+
         cur.execute("DELETE FROM tr_users WHERE username = %s",
                     [user_to_delete])
         conn.commit()
@@ -750,6 +791,7 @@ def del_user():
     '''check if user requested to deactivate their account'''
     if user_to_delete == get_username_from_session(sessionID):
         conn, cur = getcon()
+
         cur.execute("DELETE FROM tr_users WHERE username = %s",
                     [user_to_delete])
         cur.execute("DELETE FROM tr_session WHERE username = %s", [user_to_delete])
@@ -776,6 +818,7 @@ def get_account_recover():
                 sessionID = request.cookies.get('r_sessionID')
                 csrf_token = createRandomId()
                 conn, cur = getcon()
+
                 sql = "UPDATE tr_r_session SET csrf = %s WHERE r_sid= %s"
                 data = (csrf_token, sessionID)
                 cur.execute(sql, data)
@@ -974,6 +1017,7 @@ def unban_ip():
     ''' if there is a session and user has admin rights, remove given ip address form the banned ip list'''
     if (sessionID and is_admin(get_username_from_session(sessionID))):
         conn, cur = getcon()
+
         cur.execute("DELETE FROM ip_ban WHERE ip_address = %s", [ip_to_unban])
         conn.commit()
         return
