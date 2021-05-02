@@ -658,14 +658,14 @@ def signup_form():
             return render_template('signup.html')
     else:
         user_sign_up = {
-            'firstname':  request.form['name'].lower(),
-            'lastname': request.form['surname'].lower(),
-            'username': request.form['username'].lower(),
-            'email': request.form['email'].lower(),
+            'firstname':  request.form['name'].lower().replace(" ", ""),
+            'lastname': request.form['surname'].lower().replace(" ", ""),
+            'username': request.form['username'].lower().replace(" ", ""),
+            'email': request.form['email'].lower().replace(" ", ""),
             'dob': request.form['birthdate'],
-            'password': request.form['password'],
+            'password': request.form['password'].replace(" ", ""),
             'recovery_question': request.form['recovery-question'],
-            'recovery_answer': request.form['recovery-answer'],
+            'recovery_answer': request.form['recovery-answer'].replace(" ", ""),
             'salt': pw_salt(),
             'r_salt': pw_salt()
         }
