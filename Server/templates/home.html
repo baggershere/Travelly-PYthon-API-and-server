@@ -116,7 +116,7 @@
           <h5 id="post-title p-4">{{posts[i]["title"].title() | safe}}</h5>
           <span class="d-md-flex top-right-corner p-2" id="user-country"><i>{{posts[i]["country"].title() |
               safe}}</i></span>
-          <p class="p-4"> <span id="author"><a href="/user/{{posts[i][" author"] | safe}}">{{posts[i]["author"].title()
+          <p class="p-4"> <span id="author"><a href="/user/{{posts[i]["author"] | safe}}">{{posts[i]["author"].title()
                 | safe}}</a></span> : {{posts[i]["content"] | safe}}
           </p>
           <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] | safe}}</i></span>
@@ -124,7 +124,6 @@
       </div>
       {%endfor%}
     </div>
-
   </div>
 </body>
 
