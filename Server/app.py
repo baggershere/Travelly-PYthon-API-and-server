@@ -787,7 +787,6 @@ def get_account_recover():
             return redirect(url_for('home'))
         else:
             session_exists = session_r_auth_not_loggedin(request.cookies)
-            print(session_exists)
             if session_exists:
                 '''if there is a session, update csrf token for given sessionid and send token to form'''
                 sessionID = request.cookies.get('r_sessionID')
