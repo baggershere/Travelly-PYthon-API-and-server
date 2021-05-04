@@ -3,6 +3,7 @@ import datetime
 import random
 from psycopg2.extensions import AsIs
 import os
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 dirname = os.path.dirname(__file__)
 filename = os.path.join(dirname, 'password.txt')
@@ -13,7 +14,7 @@ f.close()
 
 def getConn():
     connStr = "host=localhost \
-               dbname=Travelly user=postgres password = " + password
+               user=postgres password = " + password
     conn = psycopg2.connect(connStr)
     return conn
 
@@ -185,11 +186,23 @@ def create_post(author, country):
 #         date = date + datetime.timedelta( random.randrange(1,3), minutes=random.randrange(1,120), hours=random.randrange(0,6) )
 #         cur.execute('INSERT INTO tr_comment (cid, author, content,date) VALUES (?,?,?,?,?,?)',(id, country, author, content,date))
 
+
+conn = getConn()
+cur = conn.cursor()
+conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+cur.execute("DROP DATABASE IF EXISTS travelly WITH (FORCE);")
+cur.execute("CREATE DATABASE travelly;")
+
+def getConnTravelly():
+    connStr = "host=localhost dbname=travelly user=postgres password = " + password
+    conn = psycopg2.connect(connStr)
+    return conn
+
 try:
     conn = None
-    conn = getConn()
+    conn = getConnTravelly()
     cur = conn.cursor()
-
+    
     cur.execute("DROP SCHEMA IF EXISTS %s CASCADE", [AsIs('travelly')])
 
     file_p = open('schema.sql', 'r')
