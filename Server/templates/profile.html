@@ -17,7 +17,7 @@
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
     <title>Profile</title>
 </head>
 
@@ -85,24 +85,27 @@
                             </tr>
                             <tr>
                                 <th scope="row">Delete account</th>
-                                <td><button class='del-account btn btn-danger' value={{user_info["username"].lower() | safe}}>DELETE</button></td>
+                                <td><button class='del-account btn btn-danger' value={{user_info["username"].lower() |
+                                        safe}}>DELETE</button></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        
+
         <div class="container user-posts">
             {%for i in range(0, len)%}
             <div class="row  justify-content-center">
                 <div class="col-10 p-4 m-3" id="post-content-bg">
                     <h5 id="post-title p-4">{{posts[i]["title"].title() | safe}}</h5>
-                    <span class="d-md-flex top-right-corner p-2"
-                        id="user-country"><i>{{posts[i]["country"].title() | safe}}</i></span>
-                    <p class="p-4"> <span id="author">{{posts[i]["author"].title() | safe}}</span> : {{posts[i]["content"] | safe}}
+                    <span class="d-md-flex top-right-corner p-2" id="user-country"><i>{{posts[i]["country"].title() |
+                            safe}}</i></span>
+                    <p class="p-4"> <span id="author">{{posts[i]["author"].title() | safe}}</span> :
+                        {{posts[i]["content"] | safe}}
                     </p>
-                    <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] | safe}}</i></span>
+                    <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] |
+                            safe}}</i></span>
                     <form class='postform' method='POST' target="hiddenFrame">
                         <input name='pid' type="hidden" value="{{posts[i].pid}}">
                         <button type='submit' class="btn btn-danger">Delete</button>
@@ -120,10 +123,12 @@
         form.addEventListener('submit', async e => {
             e.preventDefault();
             pid = form.elements['pid'].value
-            const call = await fetch('/api/deletepost', {method:'POST', headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-        }, body: JSON.stringify({pid:pid})}).then(resp => location.reload())
+            const call = await fetch('/api/deletepost', {
+                method: 'POST', headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                }, body: JSON.stringify({ pid: pid })
+            }).then(resp => location.reload())
         })
     })
 
@@ -131,12 +136,15 @@
     delAccountBtn.addEventListener('click', async e => {
         e.preventDefault();
         username = e.target.value;
-        const call = await fetch('/api/deleteuser', {method:'POST', headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        }, body: JSON.stringify({user:username})}).then(resp => resp.status === 200 ? location.href = '/home' : location.reload())
-        })
+        const call = await fetch('/api/deleteuser', {
+            method: 'POST', headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            }, body: JSON.stringify({ user: username })
+        }).then(resp => resp.status === 200 ? location.href = '/home' : location.reload())
+    })
 
-    
+
 </script>
+
 </html>

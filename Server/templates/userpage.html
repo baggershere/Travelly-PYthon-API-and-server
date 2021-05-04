@@ -59,17 +59,19 @@
     </nav>
 
     <div>
-        
+
         <div class="container user-posts">
             {%for i in range(0, len)%}
             <div class="row  justify-content-center">
                 <div class="col-10 p-4 m-3" id="post-content-bg">
                     <h5 id="post-title p-4">{{posts[i]["title"].title() | safe}}</h5>
-                    <span class="d-md-flex top-right-corner p-2"
-                        id="user-country"><i>{{posts[i]["country"].title() | safe}}</i></span>
-                    <p class="p-4"> <span id="author">{{posts[i]["author"].title() | safe}}</span> : {{posts[i]["content"] | safe}}
+                    <span class="d-md-flex top-right-corner p-2" id="user-country"><i>{{posts[i]["country"].title() |
+                            safe}}</i></span>
+                    <p class="p-4"> <span id="author">{{posts[i]["author"].title() | safe}}</span> :
+                        {{posts[i]["content"] | safe}}
                     </p>
-                    <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] | safe}}</i></span>
+                    <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] |
+                            safe}}</i></span>
                 </div>
             </div>
             {%endfor%}

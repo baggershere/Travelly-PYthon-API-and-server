@@ -17,11 +17,11 @@
     crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
     integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
+  <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
   <title>Home</title>
 </head>
 
-<body  class="bg-image">
+<body class="bg-image">
   <nav class="navbar navbar-expand-lg navbar-light bg-light pb-3" id="navbar-bg">
     <a class="navbar-brand" href="/home">
       <img src="{{url_for('static', filename='world.png')}}" width="150" height="150" alt="">
@@ -67,14 +67,14 @@
         <div class="col-xl-6 col-lg-6 mt-4 table-bg">
           <form method="POST">
             <div class="form-group pt-4">
-              <input  name="csrf_token" type="hidden" value= {{ csrf_token }} />
+              <input name="csrf_token" type="hidden" value={{ csrf_token }} />
               <input class="form-control" name="post-title" type="text" placeholder="Post Title" required>
             </div>
             <div class="form-group m-0">
               <label for="inputState">Choose Your Country</label>
               <select id="inputState" name="country" class="form-control">
                 {% for country in countries %}
-                    <option>{{country[0]}}</option>
+                <option>{{country[0]}}</option>
                 {% endfor %}
               </select>
             </div>
@@ -114,8 +114,10 @@
       <div class="row  justify-content-center">
         <div class="col-10 p-4 m-3" id="post-content-bg">
           <h5 id="post-title p-4">{{posts[i]["title"].title() | safe}}</h5>
-          <span class="d-md-flex top-right-corner p-2" id="user-country"><i>{{posts[i]["country"].title() | safe}}</i></span>
-          <p class="p-4"> <span id="author"><a href="/user/{{posts[i]["author"] | safe}}">{{posts[i]["author"].title() | safe}}</a></span> : {{posts[i]["content"] | safe}}
+          <span class="d-md-flex top-right-corner p-2" id="user-country"><i>{{posts[i]["country"].title() |
+              safe}}</i></span>
+          <p class="p-4"> <span id="author"><a href="/user/{{posts[i][" author"] | safe}}">{{posts[i]["author"].title()
+                | safe}}</a></span> : {{posts[i]["content"] | safe}}
           </p>
           <span class="d-md-flex bottom-right-corner p-2" id="content-date"><i>{{posts[i]["date"] | safe}}</i></span>
         </div>
@@ -127,4 +129,3 @@
 </body>
 
 </html>
-

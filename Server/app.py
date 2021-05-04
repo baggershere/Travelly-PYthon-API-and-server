@@ -41,10 +41,10 @@ def escape_email(s):
     s = s.replace("`", "&grave;")
     return s
 
+
 app = Flask(__name__)
 app.config['DEBUG'] = True
 search_path = "SET SEARCH_PATH TO travelly;"
-
 
 
 dirname = os.path.dirname(__file__)
@@ -57,11 +57,11 @@ f.close()
 def getcon():
     '''used to conntect to database'''
     connStr = "host='localhost' user='postgres' dbname='Travelly' password=" + password
-    conn=psycopg2.connect(connStr) 
+    conn = psycopg2.connect(connStr)
     cur = conn.cursor()
     cur.execute(search_path)
-    print(cur, conn)
     return conn, cur
+
 
 def error_handler(err):
     '''handles errors sent by the database'''
@@ -86,7 +86,7 @@ def get_salt_from_db(username):
         Coalesce makes it return 1 instead of NULL which stops erros in login process.'''
         cur.execute(
             "SELECT coalesce(min(salt),'1') FROM tr_users WHERE username = %s;", [username])
-        
+
         return cur.fetchone()[0]
     except Exception as e:
         error_handler(e)
@@ -137,7 +137,6 @@ def session_auth(cookies):
                 return False
         else:
             '''if session does not exist  in db'''
-            print('session not valid')
             return False
     else:
         '''if there is no session in the cookie'''
@@ -160,13 +159,15 @@ def session_auth_not_loggedin(cookies):
     else:
         return False
 
+
 def session_r_auth_not_loggedin(cookies):
     '''used to manage sessions for account recovery pages'''
     session = cookies.get('r_sessionID')
     if (session):
         conn, cur = getcon()
 
-        cur.execute("SELECT r_sid FROM tr_r_session WHERE r_sid = %s", [session])
+        cur.execute(
+            "SELECT r_sid FROM tr_r_session WHERE r_sid = %s", [session])
         resp = cur.fetchone()
         conn.commit()
         if (resp):
@@ -175,6 +176,7 @@ def session_r_auth_not_loggedin(cookies):
             return False
     else:
         return False
+
 
 def get_username_from_session(sessionID):
     '''selects username based on given sessionID'''
@@ -187,18 +189,20 @@ def get_username_from_session(sessionID):
     else:
         return 'No user'
 
-def get_username_from_r_session(r_sessionID):
 
+def get_username_from_r_session(r_sessionID):
     '''gets username based on account recovery page session ID'''
     conn, cur = getcon()
 
-    cur.execute("SELECT username FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
+    cur.execute(
+        "SELECT username FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
     user = cur.fetchone()
     conn.commit()
     if (user):
         return user[0]
     else:
         return 'No user'
+
 
 def insert_post(post_info):
     '''insets post content into db, escaping it first'''
@@ -213,8 +217,8 @@ def insert_post(post_info):
                 title, country, author, content, date])
     conn.commit()
 
-def fetch_all_posts():
 
+def fetch_all_posts():
     '''retrieves all posts from the db to display on the page, ordering them by date'''
     conn, cur = getcon()
 
@@ -232,8 +236,8 @@ def fetch_all_posts():
         })
     return posts_array
 
-def fetch_banned_ip():
 
+def fetch_banned_ip():
     '''selects all IP addresses from the banned ip address table'''
     conn, cur = getcon()
 
@@ -241,6 +245,7 @@ def fetch_banned_ip():
         "SELECT DISTINCT ip_address FROM ip_ban WHERE date >= now() - INTERVAL '30 minute'")
     resp = cur.fetchall()
     return resp
+
 
 def insert_into_ip_ban(username, ip):
     '''inserts a user into the banned ip address table'''
@@ -250,6 +255,7 @@ def insert_into_ip_ban(username, ip):
                 ip, username])
     conn.commit()
     conn.close()
+
 
 def ip_ban_or_no_ip_ban(ip):
     '''checks if an IP address is banned or not'''
@@ -329,7 +335,6 @@ def lockout_or_no_lockout(username):
     cur.execute(
         "SELECT COUNT(*) FROM tr_lockout WHERE username = %s AND date >= now() - INTERVAL '30 minute'", [username])
     resp = cur.fetchone()[0]
-    print(resp)
     if resp > 3:
         return True
     else:
@@ -358,12 +363,15 @@ def get_csrf_token(sessionID):
     csrf_token = cur.fetchone()[0]
     return csrf_token
 
+
 def get_r_csrf_token(r_sessionID):
     '''gets csrf token for given session for account recovery page'''
     conn, cur = getcon()
-    cur.execute("SELECT csrf FROM tr_r_session WHERE r_sid = %s", [r_sessionID])
+    cur.execute("SELECT csrf FROM tr_r_session WHERE r_sid = %s",
+                [r_sessionID])
     csrf_token = cur.fetchone()[0]
     return csrf_token
+
 
 def get_username_from_pid(pid):
     '''gets username for a given post ID'''
@@ -415,7 +423,7 @@ def fetch_all_countries():
     return resp
 
 
-@app.route('/', methods = ['GET'])
+@app.route('/', methods=['GET'])
 def default_home():
     return redirect(url_for('home'))
 
@@ -466,7 +474,6 @@ def createpost():
                 'content': delete_tags(str(request.form['post-content'])),
                 'date': datetime.datetime.now()
             }
-            print(input_data)
 
             '''In order to completed the input_data object with the missing data needed to
             insert the post, we can use the session to access the author of the post.'''
@@ -496,8 +503,8 @@ def logout():
         cur.execute("DELETE FROM %s WHERE sid=%s",
                     [AsIs('tr_session'), session])
         conn.commit()
-        resp= make_response(redirect(url_for('home')))
-        resp.set_cookie('sessionID', '', max_age= 0)
+        resp = make_response(redirect(url_for('home')))
+        resp.set_cookie('sessionID', '', max_age=0)
         return resp
     else:
         return redirect(url_for('get_login'))
@@ -538,6 +545,7 @@ def user_page(username):
     session = session_auth(request.cookies)
     user_posts = fetch_most_recent_user_posts(escape(username))
     return render_template('userpage.html', posts=user_posts, len=len(user_posts), username=username)
+
 
 @app.route('/profile')
 def profile_page():
@@ -580,7 +588,8 @@ def get_login():
             '''render login.html and send csrf token to form'''
             resp = make_response(render_template(
                 'login.html', csrf_token=csrf_token))
-            resp.set_cookie('sessionID', sessionID,samesite='Lax', httponly=True)
+            resp.set_cookie('sessionID', sessionID,
+                            samesite='Lax', httponly=True)
             return resp
     else:
         '''if no session exists yet, create one and add to db with csrf token'''
@@ -594,7 +603,7 @@ def get_login():
         conn.commit()
         resp = make_response(render_template(
             'login.html', csrf_token=csrf_token))
-        resp.set_cookie('sessionID', sessionID,samesite='Lax', httponly=True)
+        resp.set_cookie('sessionID', sessionID, samesite='Lax', httponly=True)
         return resp
 
 
@@ -624,13 +633,10 @@ def post_login():
             check_account = cur.fetchone()[0]
 
             '''checks IP address to see if it is banned or not'''
-        
-            print(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
-            print(ip_ban_or_no_ip_ban(request.environ.get(
-                'HTTP_X_REAL_IP', request.remote_addr)))
+
             if (ip_ban_or_no_ip_ban(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))):
                 return render_template('login.html', check_input='IP BANNED', csrf_token=csrf_token)
-            
+
             '''if the pw entered is incorrect, uswrname and time added to lockout table'''
             if (username_right_password_wrong(data['username'], user_input_password)):
                 cur.execute("INSERT INTO tr_lockout VALUES (%s, %s)", [
@@ -638,11 +644,11 @@ def post_login():
                 conn.commit()
                 insert_into_ip_ban(data['username'], request.environ.get(
                     'HTTP_X_REAL_IP', request.remote_addr))
-                
+
             '''if username is in lockout table, message is sent to user'''
             if (lockout_or_no_lockout(data['username'])):
                 return render_template('login.html', check_input='Your account has been temporarily locked out', csrf_token=csrf_token)
-            
+
             '''if there is a result, the pw and username were correct'''
             if check_account != 0:
                 conn, cur = getcon()
@@ -667,7 +673,6 @@ def post_login():
                 return render_template('login.html', check_input='Incorrect username or password', csrf_token=csrf_token)
 
         except Exception as e:
-            print(e)
             return render_template('login.html', check_input='Something happened BAD!')
     else:
         return render_template('login.html', check_input='CSRF tokens do not match.')
@@ -727,13 +732,13 @@ def signup_form():
 def delete_post():
     #session = session_auth(request.cookies)
     pid = request.json['pid']
-   
+
     sessionID = request.cookies.get('sessionID')
     resp = make_response('unauthorised', 401)
     if (sessionID != None and session_auth(request.cookies)):
         username_from_session = get_username_from_session(sessionID)
         username_from_pid = get_username_from_pid(pid)
-        
+
         '''Check that username from session is equal to username of the post, or if user is an admin user'''
         if (((username_from_session != None and username_from_pid != None) and (username_from_session == username_from_pid)) or (is_admin(get_username_from_session(sessionID)))):
             conn, cur = getcon()
@@ -766,7 +771,8 @@ def del_user():
 
         cur.execute("DELETE FROM tr_users WHERE username = %s",
                     [user_to_delete])
-        cur.execute("DELETE FROM tr_session WHERE username = %s", [user_to_delete])
+        cur.execute("DELETE FROM tr_session WHERE username = %s",
+                    [user_to_delete])
         conn.commit()
         resp = make_response('success', 200)
         return resp
@@ -794,7 +800,7 @@ def get_account_recover():
                 data = (csrf_token, sessionID)
                 cur.execute(sql, data)
                 conn.commit()
-                return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token)
+                return render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token=csrf_token)
             else:
                 ''' if there is no session, create one'''
                 r_sessionID = createRandomId()
@@ -805,12 +811,13 @@ def get_account_recover():
                 conn, cur = getcon()
                 cur.execute(sql, data)
                 conn.commit()
-                resp = make_response(render_template('accountrecovery.html', recovery_form=True, question_form=False, password_form=False, csrf_token= csrf_token))
-                resp.set_cookie('r_sessionID', r_sessionID,samesite='Lax', httponly=True)
+                resp = make_response(render_template('accountrecovery.html', recovery_form=True,
+                                     question_form=False, password_form=False, csrf_token=csrf_token))
+                resp.set_cookie('r_sessionID', r_sessionID,
+                                samesite='Lax', httponly=True)
                 return resp
     except Exception as e:
         error_handler(e)
-
 
 
 @app.route('/recoveryquestion', methods=['POST'])
@@ -831,7 +838,7 @@ def post_account_recover():
         update_username_from_r_session(username, r_sessionID)
         return render_template('accountrecovery.html', recovery_form=False, password_form=True, recovery_question=recovery_question, csrf_token=csrf_token)
     else:
-        return render_template('accountrecovery.html', recovery_form=True, check_input="Please, check your credentials again!",csrf_token=csrf_token)
+        return render_template('accountrecovery.html', recovery_form=True, check_input="Please, check your credentials again!", csrf_token=csrf_token)
 
 
 @app.route('/changepassword', methods=['POST'])
@@ -870,19 +877,20 @@ def change_account_password():
                             salted_pw = pw_hash_salt(
                                 user_change_password['new_password'], user_change_password['salt'])
                             ''' update password, delete session and redirect to login page'''
-                            update_password(username, salted_pw, user_change_password['salt'])
+                            update_password(username, salted_pw,
+                                            user_change_password['salt'])
                             delete_r_sessionID(r_sessionID)
                             return redirect('login')
                         else:
-                            return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!",csrf_token=csrf_token)
+                            return render_template('accountrecovery.html', password_form=True, check_input="Please, check your answer again!", csrf_token=csrf_token)
                     else:
-                        return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!",csrf_token=csrf_token)
+                        return render_template('accountrecovery.html', password_form=True, check_input="Please, enter a valid password!", csrf_token=csrf_token)
                 else:
-                    return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username",csrf_token=csrf_token)
+                    return render_template('accountrecovery.html', password_form=True, check_input="Please, check your username", csrf_token=csrf_token)
             else:
-                    return render_template('accountrecovery.html', password_form=True,check_input='CSRF tokens do not match.',csrf_token=csrf_token)
+                return render_template('accountrecovery.html', password_form=True, check_input='CSRF tokens do not match.', csrf_token=csrf_token)
     except:
-        return render_template('accountrecovery.html', invalid_session = True)
+        return render_template('accountrecovery.html', invalid_session=True)
 
 
 def is_valid_password(user_data, password):
@@ -926,6 +934,7 @@ def update_password(username, password, salt):
     cur.execute(sql, data)
     conn.commit()
 
+
 def update_username_from_r_session(username, r_sessionID):
     '''update username for given session ID so it is no longer 'null' '''
     conn, cur = getcon()
@@ -934,11 +943,12 @@ def update_username_from_r_session(username, r_sessionID):
     cur.execute(sql, data)
     conn.commit()
 
+
 def delete_r_sessionID(session):
     ''' delete session for recovery page'''
     conn, cur = getcon()
     cur.execute("DELETE FROM %s WHERE r_sid=%s",
-                    [AsIs('tr_r_session'), session])
+                [AsIs('tr_r_session'), session])
     conn.commit()
 
 
@@ -968,21 +978,22 @@ def wipe_all():
     if(session_is_admin(request.cookies)):
         ''' if user has admin rights, delete users who havent posted in last 30 mins?? '''
         conn, cur = getcon()
-        cur.execute("SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes'")
+        cur.execute(
+            "SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes'")
         users = cur.fetchall()
-        cur.execute("DELETE FROM tr_users WHERE username IN (SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes')")
+        cur.execute(
+            "DELETE FROM tr_users WHERE username IN (SELECT author FROM tr_post WHERE tr_post.date >= now() - INTERVAL '30 minutes')")
         conn.commit()
         resp = make_response('success', 200)
         data = list(set([user[0] for user in users]))
-        print(data)
         return make_response(jsonify({'users': data}), 200)
     else:
         resp = make_response('unsuccessful', 401)
         return resp
 
+
 @app.route('/api/unbanip', methods=['POST'])
 def unban_ip():
-    print('ran')
     sessionID = request.cookies.get('sessionID')
     ip_to_unban = request.json['ip']
     '''if there is a session and user has admin rights, remove given ip address form the banned ip list'''
@@ -994,6 +1005,7 @@ def unban_ip():
         return
     else:
         return
+
 
 def insert_user(data):
     ''' insert user details into database once they have been escaped. If username or email already in db, send message to user.'''
@@ -1031,6 +1043,7 @@ def input_validation(user_sign_up):
         return "Account recovery answer must include only letters and numbers."
     else:
         return True
+
 
 def pw_salt():
     '''create password salt'''

@@ -18,8 +18,8 @@
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/home.css') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/home.css') }}">
     <style>
         .popup-container {
             width: 50%;
@@ -33,28 +33,28 @@
             display: none;
             flex-direction: column;
         }
+
         .popup-container h3,
         .popup-container p {
             color: black;
         }
-        
     </style>
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light pb-3" id="navbar-bg">
         <a class="navbar-brand" href="/home">
-          <img src="{{url_for('static', filename='world.png')}}" width="75" height="75" alt="">
+            <img src="{{url_for('static', filename='world.png')}}" width="75" height="75" alt="">
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
-              <li class="nav-item active">
-                <a class="nav-link navbar-font-size" href="/home">Home<span class="sr-only">(current)</span></a>
-              </li>
+                <li class="nav-item active">
+                    <a class="nav-link navbar-font-size" href="/home">Home<span class="sr-only">(current)</span></a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -64,7 +64,7 @@
 
     <h1 class="text-danger mb-3 mt-2 ml-4 deneme">Admin page</h1>
     <h3>Wipe any accounts that haven't posted in a year</h3>
-        <button class='wipe-inactive-accounts'>Wipe accounts</button>
+    <button class='wipe-inactive-accounts'>Wipe accounts</button>
     <div class='container-fluid'>
         <div class="row">
             <div class="col-xl-6 col-lg-8 mb-5">
@@ -125,13 +125,13 @@
                         {% for ip in banned_ips %}
                         <tr>
                             <td>{{ip[0]}}</td>
-                           <td><button class='del_ip_ban btn btn-danger' value={{ip[0]}}>Unban</button></td>
+                            <td><button class='del_ip_ban btn btn-danger' value={{ip[0]}}>Unban</button></td>
                         </tr>
                         {%endfor%}
                     </table>
                 </div>
             </div>
-        </div> 
+        </div>
     </div>
 
     <script>
@@ -140,37 +140,37 @@
             popup.innerHTML = '';
             data = Promise.resolve(data)
             data.then((res) => {
-                if (status === 'success'){
-                popup.style.display = 'flex';
-                title = document.createElement('h3')
-                title.innerText = res.users.length > 0 ? 'Succesful delete' : 'No users to delete';
-                popup.appendChild(title)
-                const userContainer = document.createElement('div');
-                userContainer.className = 'user-container';
-                userContainer.style.overflow = 'scroll'
-                popup.appendChild(userContainer);
-                res.users.forEach(name => {
-                    p = document.createElement('p')
-                    p.innerText = name
-                    userContainer.appendChild(p)
-                })
-                btn = document.createElement('button')
-                btn.innerText = 'continue'
-                btn.addEventListener('click', e => {
-                    popup.style.display = 'none'
-                })
-                popup.appendChild(btn)
-            } else {
-                title = document.createElement('h3')
-                title.innerText = 'Request failed';
-                popup.appendChild(title)
-                btn = document.createElement('button')
-                btn.innerText = 'continue'
-                btn.addEventListener('click', e => {
-                    popup.style.display = 'none'
-                })
-                popup.appendChild(btn)
-            }
+                if (status === 'success') {
+                    popup.style.display = 'flex';
+                    title = document.createElement('h3')
+                    title.innerText = res.users.length > 0 ? 'Succesful delete' : 'No users to delete';
+                    popup.appendChild(title)
+                    const userContainer = document.createElement('div');
+                    userContainer.className = 'user-container';
+                    userContainer.style.overflow = 'scroll'
+                    popup.appendChild(userContainer);
+                    res.users.forEach(name => {
+                        p = document.createElement('p')
+                        p.innerText = name
+                        userContainer.appendChild(p)
+                    })
+                    btn = document.createElement('button')
+                    btn.innerText = 'continue'
+                    btn.addEventListener('click', e => {
+                        popup.style.display = 'none'
+                    })
+                    popup.appendChild(btn)
+                } else {
+                    title = document.createElement('h3')
+                    title.innerText = 'Request failed';
+                    popup.appendChild(title)
+                    btn = document.createElement('button')
+                    btn.innerText = 'continue'
+                    btn.addEventListener('click', e => {
+                        popup.style.display = 'none'
+                    })
+                    popup.appendChild(btn)
+                }
             })
         }
 
@@ -189,7 +189,7 @@
             })
         })
 
-        
+
 
         const post_buttons = document.querySelectorAll('.del_post')
         post_buttons.forEach(btn => {
@@ -224,13 +224,14 @@
         wipeAccountsBtn.addEventListener('click', async e => {
             const call = await fetch('/api/wipeinactive', {
                 method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },})
-                .then(res => res.json().then(data => ({status: res.status, body: data})))
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(res => res.json().then(data => ({ status: res.status, body: data })))
                 .then(obj => {
-                    if (obj.status === 200){
+                    if (obj.status === 200) {
                         showPopup('success', obj.body)
                     } else {
                         showPopup('fail', undefined)

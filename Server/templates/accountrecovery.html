@@ -8,7 +8,7 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/home.css') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
@@ -30,8 +30,8 @@
             <img src="{{url_for('static', filename='world.png')}}" width="150" height="150" alt="">
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
@@ -60,7 +60,7 @@
                     <div class="myform form ">
                         <form action="/recoveryquestion" method="POST">
                             <div class="form-group">
-                                <input  name="csrf_token" type="hidden" value= {{ csrf_token }} />
+                                <input name="csrf_token" type="hidden" value={{ csrf_token }} />
                                 <input type="email" name="email" class="form-control my-input" id="email"
                                     placeholder="example@example.com" required>
                             </div>
@@ -100,7 +100,7 @@
                     <div class="myform form ">
                         <form action="/changepassword" method="POST">
                             <div class="form-group">
-                                <input  name="csrf_token" type="hidden" value= {{ csrf_token }} />
+                                <input name="csrf_token" type="hidden" value={{ csrf_token }} />
                             </div>
                             <div class="form-group">
                                 <input type="text" name="recovery-answer" class="form-control my-input" id="user-name"
@@ -133,7 +133,7 @@
     <div class="mx-auto text-center">
         <div class="header-title border border-dark form-bg p-3">
             <h1 class="wv-heading--title">
-                You already changed your password ! Session is Invalid! 
+                You already changed your password ! Session is Invalid!
             </h1>
             <h2 class="wv-heading--subtitle text-success">
                 <a href="/accountrecovery"> CLICK HERE</a> to reset your password again
