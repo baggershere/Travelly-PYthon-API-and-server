@@ -178,20 +178,15 @@ def create_post(author, country):
         random.random() * datetime.timedelta(days=1)
     #date = datetime.date.today().replace(day=1, month=1) + datetime.timedelta(days=random.randint(0, 20))
     return [title, country, author, content, date]
-
-
-# def create_comment(cur, cid,pid, author):
-#     for i in range(random.randrange(2,5)):
-#         content = 'Comment %d'%(i)
-#         date = date + datetime.timedelta( random.randrange(1,3), minutes=random.randrange(1,120), hours=random.randrange(0,6) )
-#         cur.execute('INSERT INTO tr_comment (cid, author, content,date) VALUES (?,?,?,?,?,?)',(id, country, author, content,date))
-
+    
 
 conn = getConn()
 cur = conn.cursor()
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur.execute("DROP DATABASE IF EXISTS travelly WITH (FORCE);")
 cur.execute("CREATE DATABASE travelly;")
+conn.commit()
+conn.close()
 
 def getConnTravelly():
     connStr = "host=localhost dbname=travelly user=postgres password = " + password
