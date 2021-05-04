@@ -284,7 +284,6 @@ def fetch_most_recent_user_posts(username):
 
 def fetch_individual_post(id):
     conn, cur = getcon()
-    cur.execute(search_path)
     cur.execute("SELECT * FROM tr_post WHERE pid=%s", [id])
     post = cur.fetchone()
     return {
@@ -416,10 +415,9 @@ def fetch_all_countries():
     return resp
 
 
-
 @app.route('/', methods = ['GET'])
 def default_home():
-    return redirect(url_for('home')), 200
+    return redirect(url_for('home'))
 
 
 @app.route('/home', methods=['GET'])
@@ -539,7 +537,7 @@ def user_page(username):
     '''display posts for given username'''
     session = session_auth(request.cookies)
     user_posts = fetch_most_recent_user_posts(escape(username))
-    return render_template('userpage.html', posts=user_posts, len=len(user_posts))
+    return render_template('userpage.html', posts=user_posts, len=len(user_posts), username=username)
 
 @app.route('/profile')
 def profile_page():
@@ -651,7 +649,6 @@ def post_login():
                 cur.execute("DELETE FROM %s WHERE sid=%s", [
                             AsIs('tr_session'), sessionID])
                 conn.commit()
-                cur.execute(search_path)
                 cur.execute("""DELETE FROM %s WHERE username = %s""", [
                             AsIs('tr_session'), data['username']])
                 '''new session is created for when user is logged in'''

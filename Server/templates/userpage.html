@@ -17,14 +17,14 @@
         crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-    <title>Home</title>
+    <link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='world.png')}}" />
+    <title>{{username.title()}}</title>
 </head>
 
-<body>
+<body id="userpage-bg-image">
     <nav class="navbar navbar-expand-lg navbar-light bg-light pb-3" id="navbar-bg">
-        <a class="navbar-brand" href="#">
-            <img src="{{url_for('static', filename='world.png')}}" width="75" height="75" alt="">
+        <a class="navbar-brand" href="/home">
+            <img src="{{url_for('static', filename='world.png')}}" width="150" height="150" alt="">
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@
         </div>
     </nav>
 
-    <div id="userpage-bg-image">
+    <div>
         
         <div class="container user-posts">
             {%for i in range(0, len)%}
