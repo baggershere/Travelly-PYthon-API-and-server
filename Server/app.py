@@ -56,7 +56,7 @@ f.close()
 
 def getcon():
     '''used to conntect to database'''
-    connStr = "host='localhost' user='postgres' dbname='Travelly' password=" + password
+    connStr = "host='localhost' user='postgres' dbname='travelly' password=" + password
     conn = psycopg2.connect(connStr)
     cur = conn.cursor()
     cur.execute(search_path)
